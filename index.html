@@ -1,875 +1,953 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON SURGE: OVERDRIVE</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #050505;
-            color: #00ffff;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-            touch-action: none;
-            user-select: none;
-        }
-        #brand-watermark {
+     1|<!DOCTYPE html>
+     2|<html lang="en">
+     3|<head>
+     4|    <meta charset="UTF-8">
+     5|    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+     6|    <title>NEON SURGE: OVERDRIVE</title>
+     7|    <style>
+     8|        body {
+     9|            margin: 0;
+    10|            padding: 0;
+    11|            background-color: #050505;
+    12|            color: #00ffff;
+    13|            font-family: 'Courier New', Courier, monospace;
+    14|            overflow: hidden;
+    15|            touch-action: none;
+    16|            user-select: none;
+    17|        }
+    18|        #brand-watermark {
+    19|            position: absolute;
+    20|            top: 10px;
+    21|            left: 50%;
+    22|            transform: translateX(-50%);
+    23|            font-size: 14px;
+    24|            color: rgba(0, 255, 255, 0.5);
+    25|            letter-spacing: 2px;
+    26|            z-index: 100;
+    27|            pointer-events: none;
+    28|        }
+    29|        canvas {
+    30|            display: block;
+    31|        }
+    32|        #ui {
+    33|            position: absolute;
+    34|            top: 20px;
+    35|            left: 20px;
+    36|            pointer-events: none;
+    37|            z-index: 10;
+    38|        }
+    39|        #score {
+    40|            font-size: 24px;
+    41|            text-shadow: 0 0 10px #00ffff;
+    42|        }
+    43|        #frenzy-bar {
+    44|            width: 200px;
+    45|            height: 10px;
+    46|            background: #222;
+    47|            border: 1px solid #00ffff;
+    48|            margin-top: 10px;
+    49|            position: relative;
+    50|        }
+    51|        #frenzy-fill {
+    52|            width: 0%;
+    53|            height: 100%;
+    54|            background: #fff;
+    55|            box-shadow: 0 0 10px #fff;
+    56|            transition: width 0.1s;
+    57|        }
+    58|
+    59|        #message {
+    60|            position: absolute;
+    61|            top: 50%;
+    62|            left: 50%;
+    63|            transform: translate(-50%, -50%);
+    64|            text-align: center;
+    65|            font-size: 32px;
+    66|            text-shadow: 0 0 15px #ff00ff;
+    67|            color: #ff00ff;
+    68|            display: block;
+    69|            z-index: 20;
+    70|            width: 80%;
+    71|        }
+    72|        .menu-button {
+    73|            margin: 15px 0;
+    74|            padding: 15px 30px;
+    75|            background: none;
+    76|            color: #00ffff;
+    77|            border: 2px solid #00ffff;
+    78|            font-family: 'Courier New', Courier, monospace;
+    79|            font-size: 20px;
+    80|            text-transform: uppercase;
+    81|            cursor: pointer;
+    82|            box-shadow: 0 0 10px #00ffff;
+    83|            transition: 0.2s;
+    84|            display: inline-block;
+    85|            width: 240px;
+    86|            max-width: 80vw;
+    87|        }
+    88|        .menu-button:hover {
+    89|            background: #00ffff;
+    90|            color: #000;
+    91|            box-shadow: 0 0 20px #00ffff;
+    92|        }
+    93|        .menu-button:active {
+    94|            transform: scale(0.95);
+    95|        }
+    96|
+    97|        .cta-button {
+    98|            margin: 15px 0;
+    99|            padding: 15px 30px;
+   100|            background: linear-gradient(45deg, #00ffff, #ff00ff);
+   101|            color: #000 !important;
+   102|            border: none;
+   103|            font-family: 'Courier New', Courier, monospace;
+   104|            font-size: 20px;
+   105|            font-weight: bold;
+   106|            text-transform: uppercase;
+   107|            cursor: pointer;
+   108|            box-shadow: 0 0 20px #00ffff;
+   109|            transition: 0.3s;
+   110|            display: inline-block;
+   111|            width: 280px;
+   112|            max-width: 80vw;
+   113|            animation: pulse 1.5s infinite;
+   114|        }
+   115|        @keyframes pulse {
+   116|            0% { transform: scale(1); box-shadow: 0 0 20px #00ffff; }
+   117|            50% { transform: scale(1.05); box-shadow: 0 0 30px #ff00ff; }
+   118|            100% { transform: scale(1); box-shadow: 0 0 20px #00ffff; }
+   119|        }
+   120|
+   121|        /* Shop UI */
+   122|        #shop {
+   123|            position: absolute;
+   124|            top: 50%;
+   125|            left: 50%;
+   126|            transform: translate(-50%, -50%);
+   127|            background: rgba(0, 0, 0, 0.9);
+   128|            border: 2px solid #00ffff;
+   129|            padding: 20px;
+   130|            display: none;
+   131|            z-index: 30;
+   132|            text-align: center;
+   133|            box-shadow: 0 0 20px #00ffff;
+   134|        }
+   135|        .shop-item {
+   136|            display: flex;
+   137|            justify-content: space-between;
+   138|            align-items: center;
+   139|            margin: 10px 0;
+   140|            padding: 10px;
+   141|            border: 1px solid #333;
+   142|            cursor: pointer;
+   143|            transition: 0.2s;
+   144|        }
+   145|        .shop-item:hover {
+   146|            background: #111;
+   147|            border-color: #00ffff;
+   148|        }
+   149|        .shop-item.owned {
+   150|            border-color: #00ff00;
+   151|            color: #00ff00;
+   152|        }
+   153|
+   154|        #leaderboard {
+   155|            position: absolute;
+   156|            top: 20px;
+   157|            right: 20px;
+   158|            text-align: right;
+   159|            font-size: 14px;
+   160|            color: #00ffff;
+   161|            pointer-events: none;
+   162|        }
+   163|
+   164|        #audio-controls {
+   165|            position: absolute;
+   166|            bottom: 20px;
+   167|            right: 20px;
+   168|            display: flex;
+   169|            flex-direction: column;
+   170|            gap: 10px;
+   171|            z-index: 100;
+   172|            align-items: flex-end;
+   173|        }
+   174|        #audio-toggle, #audio-panic {
+   175|            width: 40px;
+   176|            height: 40px;
+   177|            background: rgba(0, 0, 0, 0.6);
+   178|            border: 2px solid #00ffff;
+   179|            color: #00ffff;
+   180|            cursor: pointer;
+   181|            font-family: 'Courier New', Courier, monospace;
+   182|            font-size: 20px;
+   183|            display: flex;
+   184|            align-items: center;
+   185|            justify-content: center;
+   186|            box-shadow: 0 0 10px #00ffff;
+   187|        }
+   188|        #volume-slider {
+   189|            width: 100px;
+   190|            appearance: none;
+   191|            background: #222;
+   192|            border: 1px solid #00ffff;
+   193|            height: 6px;
+   194|            cursor: pointer;
+   195|        }
+   196|        #volume-slider::-webkit-slider-thumb {
+   197|            appearance: none;
+   198|            width: 15px;
+   199|            height: 15px;
+   200|            background: #00ffff;
+   201|            cursor: pointer;
+   202|            box-shadow: 0 0 5px #00ffff;
+   203|        }
+   204|        #audio-toggle:hover {
+   205|            background: #00ffff;
+   206|            color: #000;
+   207|        }
+   208|
+   209|        .near-miss {
+   210|            position: absolute;
+   211|            color: #00ff00;
+   212|            font-weight: bold;
+   213|            pointer-events: none;
+   214|            animation: rise 0.8s ease-out forwards;
+   215|            text-shadow: 0 0 10px #00ff00;
+   216|        }
+   217|        @keyframes rise {
+   218|            from { transform: translateY(0); opacity: 1; }
+   219|            to { transform: translateY(-50px); opacity: 0; }
+   220|        }
+   221|
+   222|        /* Chromatic Aberration / Glitch effect during Frenzy */
+   223|        .frenzy-bg {
+   224|            animation: glitch 0.2s infinite alternate;
+   225|        }
+   226|        @keyframes glitch {
+   227|            0% { filter: hue-rotate(0deg) contrast(1); }
+   228|            100% { filter: hue-rotate(90deg) contrast(1.2); }
+   229|        }
+   230|    
+        #xp-bar-container {
             position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 14px;
-            color: rgba(0, 255, 255, 0.5);
-            letter-spacing: 2px;
-            z-index: 100;
-            pointer-events: none;
-        }
-        canvas {
-            display: block;
-        }
-        #ui {
-            position: absolute;
-            top: 20px;
+            top: 60px;
             left: 20px;
+            width: 200px;
             pointer-events: none;
             z-index: 10;
         }
-        #score {
-            font-size: 24px;
-            text-shadow: 0 0 10px #00ffff;
+        #xp-label {
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #00ffff;
         }
-        #frenzy-bar {
-            width: 200px;
-            height: 10px;
+        #xp-bar {
+            width: 100%;
+            height: 6px;
             background: #222;
             border: 1px solid #00ffff;
-            margin-top: 10px;
-            position: relative;
         }
-        #frenzy-fill {
+        #xp-fill {
             width: 0%;
             height: 100%;
-            background: #fff;
-            box-shadow: 0 0 10px #fff;
-            transition: width 0.1s;
-        }
-
-        #message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            font-size: 32px;
-            text-shadow: 0 0 15px #ff00ff;
-            color: #ff00ff;
-            display: block;
-            z-index: 20;
-            width: 80%;
-        }
-        .menu-button {
-            margin: 15px 0;
-            padding: 15px 30px;
-            background: none;
-            color: #00ffff;
-            border: 2px solid #00ffff;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 20px;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 0 10px #00ffff;
-            transition: 0.2s;
-            display: inline-block;
-            width: 240px;
-            max-width: 80vw;
-        }
-        .menu-button:hover {
             background: #00ffff;
-            color: #000;
-            box-shadow: 0 0 20px #00ffff;
+            box-shadow: 0 0 5px #00ffff;
+            transition: width 0.3s;
         }
-        .menu-button:active {
-            transform: scale(0.95);
-        }
-
-        .cta-button {
-            margin: 15px 0;
-            padding: 15px 30px;
-            background: linear-gradient(45deg, #00ffff, #ff00ff);
-            color: #000 !important;
-            border: none;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 20px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 0 20px #00ffff;
-            transition: 0.3s;
-            display: inline-block;
-            width: 280px;
-            max-width: 80vw;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 20px #00ffff; }
-            50% { transform: scale(1.05); box-shadow: 0 0 30px #ff00ff; }
-            100% { transform: scale(1); box-shadow: 0 0 20px #00ffff; }
-        }
-
-        /* Shop UI */
-        #shop {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #00ffff;
-            padding: 20px;
-            display: none;
-            z-index: 30;
-            text-align: center;
-            box-shadow: 0 0 20px #00ffff;
-        }
-        .shop-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #333;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .shop-item:hover {
-            background: #111;
-            border-color: #00ffff;
-        }
-        .shop-item.owned {
-            border-color: #00ff00;
-            color: #00ff00;
-        }
-
-        #leaderboard {
+        #level-display {
             position: absolute;
             top: 20px;
             right: 20px;
-            text-align: right;
-            font-size: 14px;
-            color: #00ffff;
-            pointer-events: none;
+            font-size: 24px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            z-index: 10;
         }
 
-        #audio-controls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 100;
-            align-items: flex-end;
-        }
-        #audio-toggle, #audio-panic {
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            cursor: pointer;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 10px #00ffff;
-        }
-        #volume-slider {
-            width: 100px;
-            appearance: none;
-            background: #222;
-            border: 1px solid #00ffff;
-            height: 6px;
-            cursor: pointer;
-        }
-        #volume-slider::-webkit-slider-thumb {
-            appearance: none;
-            width: 15px;
-            height: 15px;
-            background: #00ffff;
-            cursor: pointer;
-            box-shadow: 0 0 5px #00ffff;
-        }
-        #audio-toggle:hover {
-            background: #00ffff;
-            color: #000;
-        }
+</style>
+   231|</head>
+   232|<body style="background: #050505;">
+   233|    <div id="brand-watermark">SMC x Destroyer.fx</div>
+   234|    
+    <div id="level-display">LVL 1</div>
+    <div id="xp-bar-container">
+        <div id="xp-label">SURGE EXPERIENCE</div>
+        <div id="xp-bar"><div id="xp-fill"></div></div>
+    </div>
 
-        .near-miss {
-            position: absolute;
-            color: #00ff00;
-            font-weight: bold;
-            pointer-events: none;
-            animation: rise 0.8s ease-out forwards;
-            text-shadow: 0 0 10px #00ff00;
-        }
-        @keyframes rise {
-            from { transform: translateY(0); opacity: 1; }
-            to { transform: translateY(-50px); opacity: 0; }
-        }
-
-        /* Chromatic Aberration / Glitch effect during Frenzy */
-        .frenzy-bg {
-            animation: glitch 0.2s infinite alternate;
-        }
-        @keyframes glitch {
-            0% { filter: hue-rotate(0deg) contrast(1); }
-            100% { filter: hue-rotate(90deg) contrast(1.2); }
-        }
-    </style>
-</head>
-<body style="background: #050505;">
-    <div id="brand-watermark">SMC x Destroyer.fx</div>
     <div id="ui">
-        <div id="score">SCORE: 0</div>
-        <div style="font-size: 12px; margin-top: 5px;">FRENZY METER</div>
-        <div id="frenzy-bar"><div id="frenzy-fill"></div></div>
-    </div>
-    <div id="leaderboard">
-        TOP SURGES:<br>
-        <div id="scores-list"></div>
-    </div>
-    <div id="audio-controls">
-        <div id="audio-toggle">🔊</div>
-        <input type="range" id="volume-slider" min="0" max="2" step="0.01" value="1">
-        <div id="audio-panic">⚠️</div>
-    </div>
-    <div id="message">CLICK TO SURGE<br><span style="font-size: 18px; color: #00ffff;">Avoid the walls. Graze for bonus.</span></div>
-    
-    <div id="shop">
-        <h2 style="color: #00ffff;">NEON SHOP</h2>
-        <div id="shop-items"></div>
-        <button id="close-shop" style="margin-top: 20px; padding: 10px 20px; background: none; color: #00ffff; border: 1px solid #00ffff; cursor: pointer;">RETURN TO SURGE</button>
-    </div>
+   235|        <div id="score">SCORE: 0</div>
+   236|        <div style="font-size: 12px; margin-top: 5px;">FRENZY METER</div>
+   237|        <div id="frenzy-bar"><div id="frenzy-fill"></div></div>
+   238|    </div>
+   239|    <div id="leaderboard">
+   240|        TOP SURGES:<br>
+   241|        <div id="scores-list"></div>
+   242|    </div>
+   243|    <div id="audio-controls">
+   244|        <div id="audio-toggle">🔊</div>
+   245|        <input type="range" id="volume-slider" min="0" max="2" step="0.01" value="1">
+   246|        <div id="audio-panic">⚠️</div>
+   247|    </div>
+   248|    <div id="message">CLICK TO SURGE<br><span style="font-size: 18px; color: #00ffff;">Avoid the walls. Graze for bonus.</span></div>
+   249|    
+   250|    <div id="shop">
+   251|        <h2 style="color: #00ffff;">NEON SHOP</h2>
+   252|        <div id="shop-items"></div>
+   253|        <button id="close-shop" style="margin-top: 20px; padding: 10px 20px; background: none; color: #00ffff; border: 1px solid #00ffff; cursor: pointer;">RETURN TO SURGE</button>
+   254|    </div>
+   255|
+   256|    <canvas id="gameCanvas"></canvas>
+   257|
+   258|    <script>
+   259|        const canvas = document.getElementById('gameCanvas');
+   260|        const ctx = canvas.getContext('2d');
+   261|        const scoreElement = document.getElementById('score');
+   262|        const messageElement = document.getElementById('message');
+   263|        const frenzyFill = document.getElementById('frenzy-fill');
+   264|        const scoresList = document.getElementById('scores-list');
+   265|        const shopElement = document.getElementById('shop');
+   266|        const shopItemsContainer = document.getElementById('shop-items');
+   267|        const audioToggle = document.getElementById('audio-toggle');
 
-    <canvas id="gameCanvas"></canvas>
+        const levelDisplay = document.getElementById('level-display');
+        const xpFill = document.getElementById('xp-fill');
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const messageElement = document.getElementById('message');
-        const frenzyFill = document.getElementById('frenzy-fill');
-        const scoresList = document.getElementById('scores-list');
-        const shopElement = document.getElementById('shop');
-        const shopItemsContainer = document.getElementById('shop-items');
-        const audioToggle = document.getElementById('audio-toggle');
+   268|
+   269|        // --- Procedural Audio Engine ---
+   270|        class NeonAudio {
+   271|            constructor() {
+   272|                this.ctx = null;
+   273|                this.masterGain = null;
+   274|                this.muted = false;
+   275|                this.initialized = false;
+   276|                this.bassGain = null;
+   277|                this.melodyGain = null;
+   278|                this.tempo = 120;
+   279|                this.step = 0;
+   280|                this.nextNoteTime = 0;
+   281|                this.scheduleAheadTime = 0.1; // How far to look ahead (s)
+   282|                this.lookahead = 25.0; // How often to check for new notes (ms)
+   283|                this.timerId = null;
+   284|            }
+   285|
+   286|            async init() {
+   287|                if (this.initialized) return;
+   288|                try {
+   289|                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+   290|                    if (this.ctx.state === 'suspended') {
+   291|                        await this.ctx.resume();
+   292|                    }
+   293|
+   294|                    this.masterGain = this.ctx.createGain();
+   295|                    this.masterGain.connect(this.ctx.destination);
+   296|                    
+   297|                    this.bassGain = this.ctx.createGain();
+   298|                    this.bassGain.gain.value = 0.2;
+   299|                    this.bassGain.connect(this.masterGain);
+   300|
+   301|                    this.melodyGain = this.ctx.createGain();
+   302|                    this.melodyGain.gain.value = 0.1;
+   303|                    this.melodyGain.connect(this.masterGain);
+   304|
+   305|                    // Confirmation Beep (Loud 440Hz)
+   306|                    this.playConfirmationBeep();
+   307|                    
+   308|                    this.startSequencer();
+   309|                    this.initialized = true;
+   310|                } catch (e) {
+   311|                    console.error("Audio init failed", e);
+   312|                }
+   313|            }
+   314|
+   315|            playConfirmationBeep() {
+   316|                const now = this.ctx.currentTime;
+   317|                const osc = this.ctx.createOscillator();
+   318|                const g = this.ctx.createGain();
+   319|                osc.connect(g);
+   320|                g.connect(this.masterGain);
+   321|                osc.frequency.setValueAtTime(440, now);
+   322|                g.gain.setValueAtTime(0.5, now);
+   323|                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+   324|                osc.start(now);
+   325|                osc.stop(now + 0.5);
+   326|            }
+   327|
+   328|            startSequencer() {
+   329|                this.nextNoteTime = this.ctx.currentTime;
+   330|                this.timerId = setInterval(() => this.scheduler(), this.lookahead);
+   331|            }
+   332|
+   333|            scheduler() {
+   334|                while (this.nextNoteTime < this.ctx.currentTime + this.scheduleAheadTime) {
+   335|                    this.scheduleNote(this.nextNoteTime);
+   336|                    this.advanceNote();
+   337|                }
+   338|            }
+   339|
+   340|            advanceNote() {
+   341|                const stepDuration = 60 / this.tempo / 2;
+   342|                this.nextNoteTime += stepDuration;
+   343|                this.step++;
+   344|            }
+   345|
+   346|            scheduleNote(time) {
+   347|                // Bassline
+   348|                const bassFreqs = [55, 55, 110, 55]; 
+   349|                const freq = bassFreqs[this.step % 4];
+   350|                this.playTone(freq, 0.15, 'sawtooth', this.bassGain, time);
+   351|
+   352|                // Melody
+   353|                const melodyScale = [130.81, 155.56, 174.61, 196.00, 233.08, 261.63, 311.13];
+   354|                if (Math.random() > 0.6) {
+   355|                    const mFreq = melodyScale[Math.floor(Math.random() * melodyScale.length)];
+   356|                    this.playTone(mFreq, 0.1, 'square', this.melodyGain, time);
+   357|                }
+   358|            }
+   359|
+   360|            playTone(freq, duration, type, targetGain, startTime) {
+   361|                const osc = this.ctx.createOscillator();
+   362|                const g = this.ctx.createGain();
+   363|                osc.type = type;
+   364|                osc.frequency.setValueAtTime(freq, startTime);
+   365|                g.gain.setValueAtTime(targetGain.gain.value, startTime);
+   366|                g.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+   367|                osc.connect(g);
+   368|                g.connect(targetGain);
+   369|                osc.start(startTime);
+   370|                osc.stop(startTime + duration);
+   371|            }
+   372|
+   373|            setTempo(newTempo) {
+   374|                this.tempo = newTempo;
+   375|            }
+   376|
+   377|            setFrenzy(active) {
+   378|                if (!this.initialized) return;
+   379|                this.melodyGain.gain.value = active ? 0.2 : 0.1;
+   380|                this.tempo = active ? 160 : 120 + (Math.floor(score/10)*2);
+   381|            }
+   382|
+   383|            playSFX(type) {
+   384|                if (!this.initialized) return;
+   385|                const now = this.ctx.currentTime;
+   386|                const osc = this.ctx.createOscillator();
+   387|                const g = this.ctx.createGain();
+   388|                osc.connect(g);
+   389|                g.connect(this.masterGain);
+   390|
+   391|                if (type === 'near-miss') {
+   392|                    osc.type = 'sine';
+   393|                    osc.frequency.setValueAtTime(880, now);
+   394|                    osc.frequency.exponentialRampToValueAtTime(1760, now + 0.1);
+   395|                    g.gain.setValueAtTime(0.1, now);
+   396|                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+   397|                    osc.start(now);
+   398|                    osc.stop(now + 0.2);
+   399|                } else if (type === 'crash') {
+   400|                    osc.type = 'sawtooth';
+   401|                    osc.frequency.setValueAtTime(100, now);
+   402|                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+   403|                    g.gain.setValueAtTime(0.3, now);
+   404|                    g.gain.linearRampToValueAtTime(0, now + 0.4);
+   405|                    osc.start(now);
+   406|                    osc.stop(now + 0.4);
+   407|                } else if (type === 'purchase') {
+   408|                    osc.type = 'square';
+   409|                    osc.frequency.setValueAtTime(440, now);
+   410|                    osc.frequency.setValueAtTime(880, now + 0.05);
+   411|                    g.gain.setValueAtTime(0.1, now);
+   412|                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+   413|                    osc.start(now);
+   414|                    osc.stop(now + 0.2);
+   415|                }
+   416|            }
+   417|
+   418|            toggleMute() {
+   419|                this.muted = !this.muted;
+   420|                this.masterGain.gain.value = this.muted ? 0 : 1;
+   421|                audioToggle.innerText = this.muted ? '🔇' : '🔊';
+   422|            }
+   423|
+   424|            setVolume(val) {
+   425|                if (!this.initialized) return;
+   426|                this.masterGain.gain.value = this.muted ? 0 : parseFloat(val);
+   427|            }
+   428|
+   429|            panic() {
+   430|                if (this.ctx) {
+   431|                    this.ctx.close().then(() => {
+   432|                        this.initialized = false;
+   433|                        this.init();
+   434|                    });
+   435|                } else {
+   436|                    this.init();
+   437|                }
+   438|            }
+   439|        }
+   440|
+   441|        const neonAudio = new NeonAudio();
+   442|
+   443|        let width, height;
+   444|        let score = 0;
+   445|        let totalPoints = parseInt(localStorage.getItem('neon_surge_total_points')) || 0;
 
-        // --- Procedural Audio Engine ---
-        class NeonAudio {
-            constructor() {
-                this.ctx = null;
-                this.masterGain = null;
-                this.muted = false;
-                this.initialized = false;
-                this.bassGain = null;
-                this.melodyGain = null;
-                this.tempo = 120;
-                this.step = 0;
-                this.nextNoteTime = 0;
-                this.scheduleAheadTime = 0.1; // How far to look ahead (s)
-                this.lookahead = 25.0; // How often to check for new notes (ms)
-                this.timerId = null;
-            }
+        let playerLevel = parseInt(localStorage.getItem('neon_surge_level')) || 1;
+        let playerXP = parseInt(localStorage.getItem('neon_surge_xp')) || 0;
+        const XP_PER_LEVEL = 500;
 
-            async init() {
-                if (this.initialized) return;
-                try {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (this.ctx.state === 'suspended') {
-                        await this.ctx.resume();
-                    }
-
-                    this.masterGain = this.ctx.createGain();
-                    this.masterGain.connect(this.ctx.destination);
-                    
-                    this.bassGain = this.ctx.createGain();
-                    this.bassGain.gain.value = 0.2;
-                    this.bassGain.connect(this.masterGain);
-
-                    this.melodyGain = this.ctx.createGain();
-                    this.melodyGain.gain.value = 0.1;
-                    this.melodyGain.connect(this.masterGain);
-
-                    // Confirmation Beep (Loud 440Hz)
-                    this.playConfirmationBeep();
-                    
-                    this.startSequencer();
-                    this.initialized = true;
-                } catch (e) {
-                    console.error("Audio init failed", e);
-                }
-            }
-
-            playConfirmationBeep() {
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const g = this.ctx.createGain();
-                osc.connect(g);
-                g.connect(this.masterGain);
-                osc.frequency.setValueAtTime(440, now);
-                g.gain.setValueAtTime(0.5, now);
-                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-                osc.start(now);
-                osc.stop(now + 0.5);
-            }
-
-            startSequencer() {
-                this.nextNoteTime = this.ctx.currentTime;
-                this.timerId = setInterval(() => this.scheduler(), this.lookahead);
-            }
-
-            scheduler() {
-                while (this.nextNoteTime < this.ctx.currentTime + this.scheduleAheadTime) {
-                    this.scheduleNote(this.nextNoteTime);
-                    this.advanceNote();
-                }
-            }
-
-            advanceNote() {
-                const stepDuration = 60 / this.tempo / 2;
-                this.nextNoteTime += stepDuration;
-                this.step++;
-            }
-
-            scheduleNote(time) {
-                // Bassline
-                const bassFreqs = [55, 55, 110, 55]; 
-                const freq = bassFreqs[this.step % 4];
-                this.playTone(freq, 0.15, 'sawtooth', this.bassGain, time);
-
-                // Melody
-                const melodyScale = [130.81, 155.56, 174.61, 196.00, 233.08, 261.63, 311.13];
-                if (Math.random() > 0.6) {
-                    const mFreq = melodyScale[Math.floor(Math.random() * melodyScale.length)];
-                    this.playTone(mFreq, 0.1, 'square', this.melodyGain, time);
-                }
-            }
-
-            playTone(freq, duration, type, targetGain, startTime) {
-                const osc = this.ctx.createOscillator();
-                const g = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, startTime);
-                g.gain.setValueAtTime(targetGain.gain.value, startTime);
-                g.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-                osc.connect(g);
-                g.connect(targetGain);
-                osc.start(startTime);
-                osc.stop(startTime + duration);
-            }
-
-            setTempo(newTempo) {
-                this.tempo = newTempo;
-            }
-
-            setFrenzy(active) {
-                if (!this.initialized) return;
-                this.melodyGain.gain.value = active ? 0.2 : 0.1;
-                this.tempo = active ? 160 : 120 + (Math.floor(score/10)*2);
-            }
-
-            playSFX(type) {
-                if (!this.initialized) return;
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const g = this.ctx.createGain();
-                osc.connect(g);
-                g.connect(this.masterGain);
-
-                if (type === 'near-miss') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, now);
-                    osc.frequency.exponentialRampToValueAtTime(1760, now + 0.1);
-                    g.gain.setValueAtTime(0.1, now);
-                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-                    osc.start(now);
-                    osc.stop(now + 0.2);
-                } else if (type === 'crash') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(100, now);
-                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-                    g.gain.setValueAtTime(0.3, now);
-                    g.gain.linearRampToValueAtTime(0, now + 0.4);
-                    osc.start(now);
-                    osc.stop(now + 0.4);
-                } else if (type === 'purchase') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.setValueAtTime(880, now + 0.05);
-                    g.gain.setValueAtTime(0.1, now);
-                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-                    osc.start(now);
-                    osc.stop(now + 0.2);
-                }
-            }
-
-            toggleMute() {
-                this.muted = !this.muted;
-                this.masterGain.gain.value = this.muted ? 0 : 1;
-                audioToggle.innerText = this.muted ? '🔇' : '🔊';
-            }
-
-            setVolume(val) {
-                if (!this.initialized) return;
-                this.masterGain.gain.value = this.muted ? 0 : parseFloat(val);
-            }
-
-            panic() {
-                if (this.ctx) {
-                    this.ctx.close().then(() => {
-                        this.initialized = false;
-                        this.init();
-                    });
-                } else {
-                    this.init();
-                }
-            }
-        }
-
-        const neonAudio = new NeonAudio();
-
-        let width, height;
-        let score = 0;
-        let totalPoints = parseInt(localStorage.getItem('neon_surge_total_points')) || 0;
-        let gameActive = false;
-        let speed = 4;
-        let shake = 0;
-
-        // Frenzy State
-        let frenzyProgress = 0;
-        let isFrenzy = false;
-        let frenzyTimer = 0;
-
-        const SKINS = {
-            'Neon Cyan': { color: '#00ffff', cost: 0, owned: true },
-            'Golden Pulse': { color: '#ffcc00', cost: 50, owned: false },
-            'Void Shadow': { color: '#bc13fe', cost: 150, owned: false },
-            'Rainbow Glitch': { color: 'rainbow', cost: 500, owned: false }
-        };
-        let currentSkin = 'Neon Cyan';
-
-        const COLORS = {
-            player: '#00ffff',
-            wall: '#ff00ff',
-            particle: '#00ffff',
-            bonus: '#00ff00',
-            bg: '#050505'
-        };
-
-        const player = {
-            x: 100,
-            y: 0,
-            radius: 12,
-            targetY: 0,
-            vy: 0,
-            trail: []
-        };
-
-        let walls = [];
-        let particles = [];
-
-        function resize() {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
-            player.y = height / 2;
-            player.targetY = height / 2;
-        }
-
-        window.addEventListener('resize', resize);
-        resize();
-
-        function createWall() {
-            const gapSize = 160 - Math.min(score * 0.5, 60);
-            const gapPos = Math.random() * (height - gapSize) + gapSize/2;
-            walls.push({
-                x: width,
-                gapPos: gapPos,
-                gapSize: gapSize,
-                width: 40,
-                passed: false
-            });
-        }
-
-        function spawnParticles(x, y, color, count = 10) {
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x, y,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10,
-                    life: 1.0,
-                    color: color
-                });
-            }
-        }
-
-        function showNearMiss(x, y) {
-            const div = document.createElement('div');
-            div.className = 'near-miss';
-            div.style.left = x + 'px';
-            div.style.top = y + 'px';
-            div.innerText = 'NEAR MISS!';
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 800);
-        }
-
-        function updateLeaderboard() {
-            let highScores = JSON.parse(localStorage.getItem('neon_surge_scores')) || [];
-            highScores.push(score);
-            highScores.sort((a, b) => b - a);
-            highScores = highScores.slice(0, 5);
-            localStorage.setItem('neon_surge_scores', JSON.stringify(highScores));
-            
-            scoresList.innerHTML = highScores.map((s, i) => `${i+1}. ${s}`).join('<br>');
-        }
-
-        function renderShop() {
-            shopItemsContainer.innerHTML = '';
-            for (const [name, data] of Object.entries(SKINS)) {
-                const item = document.createElement('div');
-                item.className = `shop-item ${data.owned ? 'owned' : ''}`;
-                item.innerHTML = `<span style="color: ${data.color === 'rainbow' ? '#fff' : data.color}">${name}</span> <span>${data.owned ? 'OWNED' : data.cost + ' PTS'}</span>`;
-                item.onclick = () => buySkin(name);
-                shopItemsContainer.appendChild(item);
-            }
-        }
-
-        function buySkin(name) {
-            const skin = SKINS[name];
-            if (skin.owned) {
-                currentSkin = name;
-            } else if (totalPoints >= skin.cost) {
-                totalPoints -= skin.cost;
-                skin.owned = true;
-                currentSkin = name;
-                localStorage.setItem('neon_surge_total_points', totalPoints);
+   446|        let gameActive = false;
+   447|        let speed = 4;
+   448|        let shake = 0;
+   449|
+   450|        // Frenzy State
+   451|        let frenzyProgress = 0;
+   452|        let isFrenzy = false;
+   453|        let frenzyTimer = 0;
+   454|
+   455|        const SKINS = {
+   456|            'Neon Cyan': { color: '#00ffff', cost: 0, owned: true },
+   457|            'Golden Pulse': { color: '#ffcc00', cost: 50, owned: false },
+   458|            'Void Shadow': { color: '#bc13fe', cost: 150, owned: false },
+   459|            'Rainbow Glitch': { color: 'rainbow', cost: 500, owned: false }
+   460|        };
+   461|        let currentSkin = 'Neon Cyan';
+   462|
+   463|        const COLORS = {
+   464|            player: '#00ffff',
+   465|            wall: '#ff00ff',
+   466|            particle: '#00ffff',
+   467|            bonus: '#00ff00',
+   468|            bg: '#050505'
+   469|        };
+   470|
+   471|        const player = {
+   472|            x: 100,
+   473|            y: 0,
+   474|            radius: 12,
+   475|            targetY: 0,
+   476|            vy: 0,
+   477|            trail: []
+   478|        };
+   479|
+   480|        let walls = [];
+   481|        let particles = [];
+   482|
+   483|        
+        function updateXP(amount) {
+            playerXP += amount;
+            if (playerXP >= XP_PER_LEVEL) {
+                playerXP -= XP_PER_LEVEL;
+                playerLevel++;
                 neonAudio.playSFX('purchase');
+                messageElement.innerHTML = "LEVEL UP!<br><span style='color:#00ffff'>You are now Level " + playerLevel + "</span>";
+                messageElement.style.display = 'block';
+                setTimeout(() => { if(!gameActive) messageElement.style.display = 'block'; }, 2000);
             }
-            renderShop();
-            updateUI();
+            localStorage.setItem('neon_surge_xp', playerXP);
+            localStorage.setItem('neon_surge_level', playerLevel);
+            refreshXPUI();
         }
 
-        function updateUI() {
-            scoreElement.innerText = `SCORE: ${score}`;
-            frenzyFill.style.width = `${frenzyProgress}%`;
+        function refreshXPUI() {
+            if (levelDisplay) levelDisplay.innerText = 'LVL ' + playerLevel;
+            if (xpFill) xpFill.style.width = (playerXP / XP_PER_LEVEL * 100) + '%';
         }
 
-        async function resetGame() {
-            score = 0;
-            speed = 4;
-            walls = [];
-            particles = [];
-            player.y = height / 2;
-            player.targetY = height / 2;
-            player.vy = 0;
-            player.trail = [];
-            frenzyProgress = 0;
-            isFrenzy = false;
-            frenzyTimer = 0;
-            scoreElement.innerText = `SCORE: 0`;
-            messageElement.style.display = 'none';
-            shopElement.style.display = 'none';
-            document.body.classList.remove('frenzy-bg');
-            gameActive = true;
-            updateUI();
 
-            messageElement.style.display = 'block';
-            messageElement.innerHTML = 'CONNECTING TO SYNTH...';
-            await neonAudio.init();
-            messageElement.style.display = 'none';
-            neonAudio.setFrenzy(false);
-        }
-
-        function gameOver() {
-            gameActive = false;
-            shake = 40; 
-            spawnParticles(player.x, player.y, getPlayerColor(), 50);
-            
-            totalPoints += score;
-            localStorage.setItem('neon_surge_total_points', totalPoints);
-            
-            const highScores = JSON.parse(localStorage.getItem('neon_surge_scores')) || [];
-            const isNewHigh = highScores.length === 0 || score > highScores[0];
-            
-            if (isNewHigh) {
-                // Trigger Victory Max Dopamine Response
-                shake = 80;
-                spawnParticles(width/2, height/2, '#fff', 100);
-                messageElement.innerHTML = `<div style="color:#fff; font-size: 40px; text-shadow: 0 0 20px #fff; margin-bottom: 10px;">NEW RECORD! 🚀</div>`;
-                setTimeout(() => {
-                    renderGameOver();
-                }, 1000);
-            } else {
-                renderGameOver();
-            }
-        }
-
-        function renderGameOver() {
-            updateLeaderboard();
-            messageElement.innerHTML = `
-                <div style="margin-bottom: 20px;">CRASHED!<br>FINAL SCORE: ${score}</div>
-                <div style="font-size: 14px; color: #aaa; margin-bottom: 20px;">TOTAL BANK: ${totalPoints}</div>
-                <a href="https://wa.me/27624027710" target="_blank" class="cta-button" style="text-decoration: none; text-align: center;">JOIN THE INNER CIRCLE 💎</a>
-                <button class="menu-button" id="btn-share" style="display: block; margin: 10px auto;">SHARE SCORE ⚡</button>
-                <button class="menu-button" id="btn-restart" style="display: block; margin: 10px auto;">PLAY AGAIN</button>
-                <button class="menu-button" id="btn-shop" style="display: block; margin: 10px auto;">NEON SHOP</button>
-                <button class="menu-button" id="btn-home" style="display: block; margin: 10px auto;">MAIN MENU</button>
-            `;
-            messageElement.style.display = 'block';
-            
-            document.getElementById('btn-restart').onclick = (e) => {
-                e.stopPropagation();
-                resetGame();
-            };
-            document.getElementById('btn-shop').onclick = (e) => {
-                e.stopPropagation();
-                if (totalPoints > 0 || score > 0) {
-                    renderShop();
-                    shopElement.style.display = 'block';
-                }
-            };
-            document.getElementById('btn-home').onclick = (e) => {
-                e.stopPropagation();
-                location.reload();
-            };
-            document.getElementById('btn-share').onclick = (e) => {
-                e.stopPropagation();
-                shareScore();
-            };
-        }
-
-        async function shareScore() {
-            const shareText = `⚡ I just surged ${score} points in NEON SURGE! Can you beat me? 🚀 ${window.location.href}`;
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'NEON SURGE',
-                        text: shareText,
-                        url: window.location.href
-                    });
-                } catch (err) {
-                    console.log('Share cancelled or failed', err);
-                }
-            } else {
-                // Fallback for desktop
-                const clipboardText = shareText;
-                navigator.clipboard.writeText(clipboardText).then(() => {
-                    alert('Score copied to clipboard! Share it with your friends 🚀');
-                });
-            }
-        }
-
-        function getPlayerColor() {
-            const skin = SKINS[currentSkin];
-            if (skin.color === 'rainbow') {
-                return `hsl(${Date.now() % 360}, 100%, 50%)`;
-            }
-            return skin.color;
-        }
-
-        function triggerFrenzy() {
-            isFrenzy = true;
-            frenzyTimer = 300; // 5 seconds at 60fps
-            frenzyProgress = 0;
-            document.body.classList.add('frenzy-bg');
-            shake = 10;
-            neonAudio.setFrenzy(true);
-        }
-
-        function update() {
-            if (shake > 0) shake *= 0.9;
-
-            if (gameActive) {
-                player.vy += (player.targetY - player.y) * 0.1;
-                player.vy *= 0.85;
-                player.y += player.vy;
-
-                player.trail.push({x: player.x, y: player.y});
-                if (player.trail.length > 20) player.trail.shift();
-
-                speed = isFrenzy ? 8 : (4 + Math.floor(score / 10) * 0.5);
-
-                if (walls.length === 0 || walls[walls.length - 1].x < width - 300) {
-                    createWall();
-                }
-
-                for (let i = walls.length - 1; i >= 0; i--) {
-                    const w = walls[i];
-                    w.x -= speed;
-
-                    if (w.x < player.x + player.radius && w.x + w.width > player.x - player.radius) {
-                        const topWallEnd = w.gapPos - w.gapSize / 2;
-                        const botWallStart = w.gapPos + w.gapSize / 2;
-
-                        if (player.y - player.radius < topWallEnd || player.y + player.radius > botWallStart) {
-                            if (isFrenzy) {
-                                spawnParticles(w.x + w.width/2, player.y, COLORS.wall, 20);
-                                walls.splice(i, 1);
-                                score += 1;
-                            } else {
-                                gameOver();
-                            }
-                        } else {
-                            const distToTop = Math.abs(player.y - player.radius - topWallEnd);
-                            const distToBot = Math.abs(player.y + player.radius - botWallStart);
-            if (distToTop < 15 || distToBot < 15) {
-                if (Math.random() < 0.05) {
-                    score += 2;
-                    frenzyProgress += 5;
-                    showNearMiss(player.x, player.y);
-                    neonAudio.playSFX('near-miss');
-                    if (frenzyProgress >= 100) triggerFrenzy();
-                }
-            }
-}
-                    }
-
-                    if (!w.passed && w.x + w.width < player.x) {
-                        w.passed = true;
-                        score++;
-                        frenzyProgress += 1;
-                        if (frenzyProgress >= 100) triggerFrenzy();
-                    }
-
-                    if (w.x + w.width < 0) walls.splice(i, 1);
-                }
-
-                if (isFrenzy) {
-                    frenzyTimer--;
-                    if (frenzyTimer <= 0) {
-                        isFrenzy = false;
-                        document.body.classList.remove('frenzy-bg');
-                        neonAudio.setFrenzy(false);
-                    }
-                }
-                updateUI();
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life -= 0.02;
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-        }
-
-        function draw() {
-            ctx.fillStyle = COLORS.bg;
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.save();
-            if (shake > 0) {
-                ctx.translate(Math.random() * shake - shake/2, Math.random() * shake - shake/2);
-            }
-
-            const pColor = isFrenzy ? '#fff' : getPlayerColor();
-
-            if (player.trail.length > 1) {
-                ctx.beginPath();
-                ctx.strokeStyle = pColor;
-                ctx.lineWidth = player.radius * 2;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.globalAlpha = 0.3;
-                ctx.moveTo(player.trail[0].x, player.trail[0].y);
-                for (let i = 1; i < player.trail.length; i++) {
-                    ctx.lineTo(player.trail[i].x, player.trail[i].y);
-                }
-                ctx.stroke();
-                ctx.globalAlpha = 1.0;
-            }
-
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-            ctx.fillStyle = pColor;
-            ctx.shadowBlur = isFrenzy ? 30 : 15;
-            ctx.shadowColor = pColor;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-
-            ctx.fillStyle = COLORS.wall;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = COLORS.wall;
-            walls.forEach(w => {
-                ctx.fillRect(w.x, 0, w.width, w.gapPos - w.gapSize / 2);
-                ctx.fillRect(w.x, w.gapPos + w.gapSize / 2, w.width, height - (w.gapPos + w.gapSize / 2));
-            });
-            ctx.shadowBlur = 0;
-
-            particles.forEach(p => {
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 3, 3);
-            });
-            ctx.globalAlpha = 1.0;
-
-            ctx.restore();
-        }
-
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
-
-        function handleInput(e) {
-            if (!gameActive) {
-                if (shopElement.style.display === 'block') return;
-                
-                // If the game over screen buttons are visible, let them handle the clicks.
-                // We check if the message element contains buttons.
-                if (messageElement.style.display === 'block' && messageElement.querySelector('.menu-button')) {
-                    return;
-                }
-                
-                resetGame();
-                return;
-            }
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            player.targetY = clientY;
-        }
-
-        document.getElementById('close-shop').onclick = (e) => {
-            e.stopPropagation();
-            shopElement.style.display = 'none';
-        }
-
-        audioToggle.onclick = (e) => {
-            e.stopPropagation();
-            neonAudio.toggleMute();
-        };
-        document.getElementById('volume-slider').oninput = (e) => {
-            e.stopPropagation();
-            neonAudio.setVolume(e.target.value);
-        };
-        document.getElementById('audio-panic').onclick = (e) => {
-            e.stopPropagation();
-            neonAudio.panic();
-        };
-
-        window.addEventListener('mousedown', handleInput);
-        window.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            handleInput(e);
-        }, {passive: false});
-
-        updateLeaderboard();
-        loop();
-    </script>
-</body>
-</html>
-<!-- trigger loop -->
+function resize() {
+   484|            width = window.innerWidth;
+   485|            height = window.innerHeight;
+   486|            canvas.width = width;
+   487|            canvas.height = height;
+   488|            player.y = height / 2;
+   489|            player.targetY = height / 2;
+   490|        }
+   491|
+   492|        window.addEventListener('resize', resize);
+   493|        resize();
+    refreshXPUI();
+   494|
+   495|        function createWall() {
+   496|            const gapSize = 160 - Math.min(score * 0.5, 60);
+   497|            const gapPos = Math.random() * (height - gapSize) + gapSize/2;
+   498|            walls.push({
+   499|                x: width,
+   500|                gapPos: gapPos,
+   501|
+   501|                gapSize: gapSize,
+   502|                width: 40,
+   503|                passed: false
+   504|            });
+   505|        }
+   506|
+   507|        function spawnParticles(x, y, color, count = 10) {
+   508|            for (let i = 0; i < count; i++) {
+   509|                particles.push({
+   510|                    x, y,
+   511|                    vx: (Math.random() - 0.5) * 10,
+   512|                    vy: (Math.random() - 0.5) * 10,
+   513|                    life: 1.0,
+   514|                    color: color
+   515|                });
+   516|            }
+   517|        }
+   518|
+   519|        function showNearMiss(x, y) {
+   520|            const div = document.createElement('div');
+   521|            div.className = 'near-miss';
+   522|            div.style.left = x + 'px';
+   523|            div.style.top = y + 'px';
+   524|            div.innerText = 'NEAR MISS!';
+   525|            document.body.appendChild(div);
+   526|            setTimeout(() => div.remove(), 800);
+   527|        }
+   528|
+   529|        function updateLeaderboard() {
+   530|            let highScores = JSON.parse(localStorage.getItem('neon_surge_scores')) || [];
+   531|            highScores.push(score);
+   532|            highScores.sort((a, b) => b - a);
+   533|            highScores = highScores.slice(0, 5);
+   534|            localStorage.setItem('neon_surge_scores', JSON.stringify(highScores));
+   535|            
+   536|            scoresList.innerHTML = highScores.map((s, i) => `${i+1}. ${s}`).join('<br>');
+   537|        }
+   538|
+   539|        function renderShop() {
+   540|            shopItemsContainer.innerHTML = '';
+   541|            for (const [name, data] of Object.entries(SKINS)) {
+   542|                const item = document.createElement('div');
+   543|                item.className = `shop-item ${data.owned ? 'owned' : ''}`;
+   544|                item.innerHTML = `<span style="color: ${data.color === 'rainbow' ? '#fff' : data.color}">${name}</span> <span>${data.owned ? 'OWNED' : data.cost + ' PTS'}</span>`;
+   545|                item.onclick = () => buySkin(name);
+   546|                shopItemsContainer.appendChild(item);
+   547|            }
+   548|        }
+   549|
+   550|        function buySkin(name) {
+   551|            const skin = SKINS[name];
+   552|            if (skin.owned) {
+   553|                currentSkin = name;
+   554|            } else if (totalPoints >= skin.cost) {
+   555|                totalPoints -= skin.cost;
+   556|                skin.owned = true;
+   557|                currentSkin = name;
+   558|                localStorage.setItem('neon_surge_total_points', totalPoints);
+   559|                neonAudio.playSFX('purchase');
+   560|            }
+   561|            renderShop();
+   562|            updateUI();
+   563|        }
+   564|
+   565|        function updateUI() {
+   566|            scoreElement.innerText = `SCORE: ${score}`;
+   567|            frenzyFill.style.width = `${frenzyProgress}%`;
+   568|        }
+   569|
+   570|        async function resetGame() {
+   571|            score = 0;
+   572|            speed = 4;
+   573|            walls = [];
+   574|            particles = [];
+   575|            player.y = height / 2;
+   576|            player.targetY = height / 2;
+   577|            player.vy = 0;
+   578|            player.trail = [];
+   579|            frenzyProgress = 0;
+   580|            isFrenzy = false;
+   581|            frenzyTimer = 0;
+   582|            scoreElement.innerText = `SCORE: 0`;
+   583|            messageElement.style.display = 'none';
+   584|            shopElement.style.display = 'none';
+   585|            document.body.classList.remove('frenzy-bg');
+   586|            gameActive = true;
+   587|            updateUI();
+   588|
+   589|            messageElement.style.display = 'block';
+   590|            messageElement.innerHTML = 'CONNECTING TO SYNTH...';
+   591|            await neonAudio.init();
+   592|            messageElement.style.display = 'none';
+   593|            neonAudio.setFrenzy(false);
+   594|        }
+   595|
+   596|        function gameOver() {
+   597|            gameActive = false;
+   598|            shake = 40; 
+   599|            spawnParticles(player.x, player.y, getPlayerColor(), 50);
+   600|            
+   601|            totalPoints += score;
+   602|            localStorage.setItem('neon_surge_total_points', totalPoints);
+   603|            
+   604|            const highScores = JSON.parse(localStorage.getItem('neon_surge_scores')) || [];
+   605|            const isNewHigh = highScores.length === 0 || score > highScores[0];
+   606|            
+   607|            if (isNewHigh) {
+   608|                // Trigger Victory Max Dopamine Response
+   609|                shake = 80;
+   610|                spawnParticles(width/2, height/2, '#fff', 100);
+   611|                messageElement.innerHTML = `<div style="color:#fff; font-size: 40px; text-shadow: 0 0 20px #fff; margin-bottom: 10px;">NEW RECORD! 🚀</div>`;
+   612|                setTimeout(() => {
+   613|                    renderGameOver();
+   614|                }, 1000);
+   615|            } else {
+   616|                renderGameOver();
+   617|            }
+   618|        }
+   619|
+   620|        function renderGameOver() {
+   621|            updateLeaderboard();
+   622|            messageElement.innerHTML = `
+   623|                <div style="margin-bottom: 20px;">CRASHED!<br>FINAL SCORE: ${score}</div>
+   624|                <div style="font-size: 14px; color: #aaa; margin-bottom: 20px;">TOTAL BANK: ${totalPoints}</div>
+   625|                <a href="https://wa.me/27624027710" target="_blank" class="cta-button" style="text-decoration: none; text-align: center;">JOIN THE INNER CIRCLE 💎</a>
+   626|                <button class="menu-button" id="btn-share" style="display: block; margin: 10px auto;">SHARE SCORE ⚡</button>
+   627|                <button class="menu-button" id="btn-restart" style="display: block; margin: 10px auto;">PLAY AGAIN</button>
+   628|                <button class="menu-button" id="btn-shop" style="display: block; margin: 10px auto;">NEON SHOP</button>
+   629|                <button class="menu-button" id="btn-home" style="display: block; margin: 10px auto;">MAIN MENU</button>
+   630|            `;
+   631|            messageElement.style.display = 'block';
+   632|            
+   633|            document.getElementById('btn-restart').onclick = (e) => {
+   634|                e.stopPropagation();
+   635|                resetGame();
+   636|            };
+   637|            document.getElementById('btn-shop').onclick = (e) => {
+   638|                e.stopPropagation();
+   639|                if (totalPoints > 0 || score > 0) {
+   640|                    renderShop();
+   641|                    shopElement.style.display = 'block';
+   642|                }
+   643|            };
+   644|            document.getElementById('btn-home').onclick = (e) => {
+   645|                e.stopPropagation();
+   646|                location.reload();
+   647|            };
+   648|            document.getElementById('btn-share').onclick = (e) => {
+   649|                e.stopPropagation();
+   650|                shareScore();
+   651|            };
+   652|        }
+   653|
+   654|        async function shareScore() {
+   655|            const shareText = `⚡ I just surged ${score} points in NEON SURGE! Can you beat me? 🚀 ${window.location.href}`;
+   656|            if (navigator.share) {
+   657|                try {
+   658|                    await navigator.share({
+   659|                        title: 'NEON SURGE',
+   660|                        text: shareText,
+   661|                        url: window.location.href
+   662|                    });
+   663|                } catch (err) {
+   664|                    console.log('Share cancelled or failed', err);
+   665|                }
+   666|            } else {
+   667|                // Fallback for desktop
+   668|                const clipboardText = shareText;
+   669|                navigator.clipboard.writeText(clipboardText).then(() => {
+   670|                    alert('Score copied to clipboard! Share it with your friends 🚀');
+   671|                });
+   672|            }
+   673|        }
+   674|
+   675|        function getPlayerColor() {
+   676|            const skin = SKINS[currentSkin];
+   677|            if (skin.color === 'rainbow') {
+   678|                return `hsl(${Date.now() % 360}, 100%, 50%)`;
+   679|            }
+   680|            return skin.color;
+   681|        }
+   682|
+   683|        function triggerFrenzy() {
+   684|            isFrenzy = true;
+   685|            frenzyTimer = 300; // 5 seconds at 60fps
+   686|            frenzyProgress = 0;
+   687|            document.body.classList.add('frenzy-bg');
+   688|            shake = 10;
+   689|            neonAudio.setFrenzy(true);
+   690|        }
+   691|
+   692|        function update() {
+   693|            if (shake > 0) shake *= 0.9;
+   694|
+   695|            if (gameActive) {
+   696|                player.vy += (player.targetY - player.y) * 0.1;
+   697|                player.vy *= 0.85;
+   698|                player.y += player.vy;
+   699|
+   700|                player.trail.push({x: player.x, y: player.y});
+   701|                if (player.trail.length > 20) player.trail.shift();
+   702|
+   703|                speed = isFrenzy ? 8 : (4 + Math.floor(score / 10) * 0.5);
+   704|
+   705|                if (walls.length === 0 || walls[walls.length - 1].x < width - 300) {
+   706|                    createWall();
+   707|                }
+   708|
+   709|                for (let i = walls.length - 1; i >= 0; i--) {
+   710|                    const w = walls[i];
+   711|                    w.x -= speed;
+   712|
+   713|                    if (w.x < player.x + player.radius && w.x + w.width > player.x - player.radius) {
+   714|                        const topWallEnd = w.gapPos - w.gapSize / 2;
+   715|                        const botWallStart = w.gapPos + w.gapSize / 2;
+   716|
+   717|                        if (player.y - player.radius < topWallEnd || player.y + player.radius > botWallStart) {
+   718|                            if (isFrenzy) {
+   719|                                spawnParticles(w.x + w.width/2, player.y, COLORS.wall, 20);
+   720|                                walls.splice(i, 1);
+   721|                                score += 1;
+   722|                            } else {
+   723|                                gameOver();
+   724|                            }
+   725|                        } else {
+   726|                            const distToTop = Math.abs(player.y - player.radius - topWallEnd);
+   727|                            const distToBot = Math.abs(player.y + player.radius - botWallStart);
+   728|            if (distToTop < 15 || distToBot < 15) {
+   729|                if (Math.random() < 0.05) {
+   730|                    score += 2;
+   731|                    frenzyProgress += 5;
+   732|                    showNearMiss(player.x, player.y);
+   733|                    neonAudio.playSFX('near-miss');
+   734|                    if (frenzyProgress >= 100) triggerFrenzy();
+   735|                }
+   736|            }
+   737|}
+   738|                    }
+   739|
+   740|                    if (!w.passed && w.x + w.width < player.x) {
+   741|                        w.passed = true;
+   742|                        score++; updateXP(1);
+   743|                        frenzyProgress += 1;
+   744|                        if (frenzyProgress >= 100) triggerFrenzy();
+   745|                    }
+   746|
+   747|                    if (w.x + w.width < 0) walls.splice(i, 1);
+   748|                }
+   749|
+   750|                if (isFrenzy) {
+   751|                    frenzyTimer--;
+   752|                    if (frenzyTimer <= 0) {
+   753|                        isFrenzy = false;
+   754|                        document.body.classList.remove('frenzy-bg');
+   755|                        neonAudio.setFrenzy(false);
+   756|                    }
+   757|                }
+   758|                updateUI();
+   759|            }
+   760|
+   761|            for (let i = particles.length - 1; i >= 0; i--) {
+   762|                const p = particles[i];
+   763|                p.x += p.vx;
+   764|                p.y += p.vy;
+   765|                p.life -= 0.02;
+   766|                if (p.life <= 0) particles.splice(i, 1);
+   767|            }
+   768|        }
+   769|
+   770|        function draw() {
+   771|            ctx.fillStyle = COLORS.bg;
+   772|            ctx.fillRect(0, 0, width, height);
+   773|
+   774|            ctx.save();
+   775|            if (shake > 0) {
+   776|                ctx.translate(Math.random() * shake - shake/2, Math.random() * shake - shake/2);
+   777|            }
+   778|
+   779|            const pColor = isFrenzy ? '#fff' : getPlayerColor();
+   780|
+   781|            if (player.trail.length > 1) {
+   782|                ctx.beginPath();
+   783|                ctx.strokeStyle = pColor;
+   784|                ctx.lineWidth = player.radius * 2;
+   785|                ctx.lineCap = 'round';
+   786|                ctx.lineJoin = 'round';
+   787|                ctx.globalAlpha = 0.3;
+   788|                ctx.moveTo(player.trail[0].x, player.trail[0].y);
+   789|                for (let i = 1; i < player.trail.length; i++) {
+   790|                    ctx.lineTo(player.trail[i].x, player.trail[i].y);
+   791|                }
+   792|                ctx.stroke();
+   793|                ctx.globalAlpha = 1.0;
+   794|            }
+   795|
+   796|            ctx.beginPath();
+   797|            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+   798|            ctx.fillStyle = pColor;
+   799|            ctx.shadowBlur = isFrenzy ? 30 : 15;
+   800|            ctx.shadowColor = pColor;
+   801|            ctx.fill();
+   802|            ctx.shadowBlur = 0;
+   803|
+   804|            ctx.fillStyle = COLORS.wall;
+   805|            ctx.shadowBlur = 10;
+   806|            ctx.shadowColor = COLORS.wall;
+   807|            walls.forEach(w => {
+   808|                ctx.fillRect(w.x, 0, w.width, w.gapPos - w.gapSize / 2);
+   809|                ctx.fillRect(w.x, w.gapPos + w.gapSize / 2, w.width, height - (w.gapPos + w.gapSize / 2));
+   810|            });
+   811|            ctx.shadowBlur = 0;
+   812|
+   813|            particles.forEach(p => {
+   814|                ctx.globalAlpha = p.life;
+   815|                ctx.fillStyle = p.color;
+   816|                ctx.fillRect(p.x, p.y, 3, 3);
+   817|            });
+   818|            ctx.globalAlpha = 1.0;
+   819|
+   820|            ctx.restore();
+   821|        }
+   822|
+   823|        function loop() {
+   824|            update();
+   825|            draw();
+   826|            requestAnimationFrame(loop);
+   827|        }
+   828|
+   829|        function handleInput(e) {
+   830|            if (!gameActive) {
+   831|                if (shopElement.style.display === 'block') return;
+   832|                
+   833|                // If the game over screen buttons are visible, let them handle the clicks.
+   834|                // We check if the message element contains buttons.
+   835|                if (messageElement.style.display === 'block' && messageElement.querySelector('.menu-button')) {
+   836|                    return;
+   837|                }
+   838|                
+   839|                resetGame();
+   840|                return;
+   841|            }
+   842|            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+   843|            player.targetY = clientY;
+   844|        }
+   845|
+   846|        document.getElementById('close-shop').onclick = (e) => {
+   847|            e.stopPropagation();
+   848|            shopElement.style.display = 'none';
+   849|        }
+   850|
+   851|        audioToggle.onclick = (e) => {
+   852|            e.stopPropagation();
+   853|            neonAudio.toggleMute();
+   854|        };
+   855|        document.getElementById('volume-slider').oninput = (e) => {
+   856|            e.stopPropagation();
+   857|            neonAudio.setVolume(e.target.value);
+   858|        };
+   859|        document.getElementById('audio-panic').onclick = (e) => {
+   860|            e.stopPropagation();
+   861|            neonAudio.panic();
+   862|        };
+   863|
+   864|        window.addEventListener('mousedown', handleInput);
+   865|        window.addEventListener('touchmove', (e) => {
+   866|            e.preventDefault();
+   867|            handleInput(e);
+   868|        }, {passive: false});
+   869|
+   870|        updateLeaderboard();
+   871|        loop();
+   872|    </script>
+   873|</body>
+   874|</html>
+   875|<!-- trigger loop -->
+   876|
