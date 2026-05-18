@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEON SURGE: OVERDRIVE</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            color: #00ffff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+        #brand-watermark {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: rgba(0, 255, 255, 0.5);
+            letter-spacing: 2px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        canvas {
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #score {
+            font-size: 24px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        #frenzy-bar {
+            width: 200px;
+            height: 10px;
+            background: #222;
+            border: 1px solid #00ffff;
+            margin-top: 10px;
+            position: relative;
+        }
+        #frenzy-fill {
+            width: 0%;
+            height: 100%;
+            background: #fff;
+            box-shadow: 0 0 10px #fff;
+            transition: width 0.1s;
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 32px;
+            text-shadow: 0 0 15px #ff00ff;
+            color: #ff00ff;
+            display: block;
+            z-index: 20;
+            width: 80%;
+        }
+        .menu-button {
+            margin: 15px 0;
+            padding: 15px 30px;
+            background: none;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ffff;
+            transition: 0.2s;
+            display: inline-block;
+            width: 240px;
+            max-width: 80vw;
+        }
+        .menu-button:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 20px #00ffff;
+        }
+        .menu-button:active {
+            transform: scale(0.95);
+        }
+
+        .cta-button {
+            margin: 15px 0;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            color: #000 !important;
+            border: none;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 0 20px #00ffff;
+            transition: 0.3s;
+            display: inline-block;
+            width: 280px;
+            max-width: 80vw;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px #00ffff; }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px #ff00ff; }
+            100% { transform: scale(1); box-shadow: 0 0 20px #00ffff; }
+        }
+
+        /* Shop UI */
+        #shop {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ffff;
+            padding: 20px;
+            display: none;
+            z-index: 30;
+            text-align: center;
+            box-shadow: 0 0 20px #00ffff;
+        }
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .shop-item:hover {
+            background: #111;
+            border-color: #00ffff;
+        }
+        .shop-item.owned {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        #leaderboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            font-size: 14px;
+            color: #00ffff;
+            pointer-events: none;
+        }
+
+        #audio-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            align-items: flex-end;
+        }
+        #audio-toggle, #audio-panic {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px #00ffff;
+        }
+        #volume-slider {
+            width: 100px;
+            appearance: none;
+            background: #222;
+            border: 1px solid #00ffff;
+            height: 6px;
+            cursor: pointer;
+        }
+        #volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #00ffff;
+            cursor: pointer;
+            box-shadow: 0 0 5px #00ffff;
+        }
+        #audio-toggle:hover {
+            background: #00ffff;
+            color: #000;
+        }
+
+        .near-miss {
+            position: absolute;
+            color: #00ff00;
+            font-weight: bold;
+            pointer-events: none;
+            animation: rise 0.8s ease-out forwards;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        @keyframes rise {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* Chromatic Aberration / Glitch effect during Frenzy */
+        .frenzy-bg {
+            animation: glitch 0.2s infinite alternate;
+        }
+        @keyframes glitch {
+            0% { filter: hue-rotate(0deg) contrast(1); }
+            100% { filter: hue-rotate(90deg) contrast(1.2); }
+        }
+    </style>
+</head>
+<body style="background: #050505;">
+    <div id="brand-watermark">SMC x Destroyer.fx</div>
+    <div id="ui">
+        <div id="score">SCORE: 0</div>
+        <div style="font-size: 12px; margin-top: 5px;">FRENZY METER</div>
+        <div id="frenzy-bar"><div id="frenzy-fill"></div></div>
+    </div>
+    <div id="leaderboard">
+        TOP SURGES:<br>
+        <div id="scores-list"></div>
+    </div>
+    <div id="audio-controls">
+        <div id="audio-toggle">🔊</div>
+        <input type="range" id="volume-slider" min="0" max="2" step="0.01" value="1">
+        <div id="audio-panic">⚠️</div>
+    </div>
+    <div id="message">CLICK TO SURGE<br><span style="font-size: 18px; color: #00ffff;">Avoid the walls. Graze for bonus.</span></div>
+    
+    <div id="shop">
+        <h2 style="color: #00ffff;">NEON SHOP</h2>
+        <div id="shop-items"></div>
+        <button id="close-shop" style="margin-top: 20px; padding: 10px 20px; background: none; color: #00ffff; border: 1px solid #00ffff; cursor: pointer;">RETURN TO SURGE</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const messageElement = document.getElementById('message');
+        const frenzyFill = document.getElementById('frenzy-fill');
+        const scoresList = document.getElementById('scores-list');
+        const shopElement = document.getElementById('shop');
+        const shopItemsContainer = document.getElementById('shop-items');
+        const audioToggle = document.getElementById('audio-toggle');
+
+        // --- Procedural Audio Engine ---
+        class NeonAudio {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.muted = false;
+                this.initialized = false;
+                this.bassGain = null;
+                this.melodyGain = null;
+                this.tempo = 120;
+                this.step = 0;
+                this.nextNoteTime = 0;
+                this.scheduleAheadTime = 0.1; // How far to look ahead (s)
+                this.lookahead = 25.0; // How often to check for new notes (ms)
+                this.timerId = null;
+            }
+
+            async init() {
+                if (this.initialized) return;
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (this.ctx.state === 'suspended') {
+                        await this.ctx.resume();
+                    }
+
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.connect(this.ctx.destination);
+                    
+                    this.bassGain = this.ctx.createGain();
+                    this.bassGain.gain.value = 0.2;
+                    this.bassGain.connect(this.masterGain);
+
+                    this.melodyGain = this.ctx.createGain();
+                    this.melodyGain.gain.value = 0.1;
+                    this.melodyGain.connect(this.masterGain);
+
+                    // Confirmation Beep (Loud 440Hz)
+                    this.playConfirmationBeep();
+                    
+                    this.startSequencer();
+                    this.initialized = true;
+                } catch (e) {
+                    console.error("Audio init failed", e);
+                }
+            }
+
+            playConfirmationBeep() {
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.connect(g);
+                g.connect(this.masterGain);
+                osc.frequency.setValueAtTime(440, now);
+                g.gain.setValueAtTime(0.5, now);
+                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            }
+
+            startSequencer() {
+                this.nextNoteTime = this.ctx.currentTime;
+                this.timerId = setInterval(() => this.scheduler(), this.lookahead);
+            }
+
+            scheduler() {
+                while (this.nextNoteTime < this.ctx.currentTime + this.scheduleAheadTime) {
+                    this.scheduleNote(this.nextNoteTime);
+                    this.advanceNote();
+                }
+            }
+
+            advanceNote() {
+                const stepDuration = 60 / this.tempo / 2;
+                this.nextNoteTime += stepDuration;
+                this.step++;
+            }
+
+            scheduleNote(time) {
+                // Bassline
+                const bassFreqs = [55, 55, 110, 55]; 
+                const freq = bassFreqs[this.step % 4];
+                this.playTone(freq, 0.15, 'sawtooth', this.bassGain, time);
+
+                // Melody
+                const melodyScale = [130.81, 155.56, 174.61, 196.00, 233.08, 261.63, 311.13];
+                if (Math.random() > 0.6) {
+                    const mFreq = melodyScale[Math.floor(Math.random() * melodyScale.length)];
+                    this.playTone(mFreq, 0.1, 'square', this.melodyGain, time);
+                }
+            }
+
+            playTone(freq, duration, type, targetGain, startTime) {
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, startTime);
+                g.gain.setValueAtTime(targetGain.gain.value, startTime);
+                g.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+                osc.connect(g);
+                g.connect(targetGain);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+
+            setTempo(newTempo) {
+                this.tempo = newTempo;
+            }
+
+            setFrenzy(active) {
+                if (!this.initialized) return;
+                this.melodyGain.gain.value = active ? 0.2 : 0.1;
+                this.tempo = active ? 160 : 120 + (Math.floor(score/10)*2);
+            }
+
+            playSFX(type) {
+                if (!this.initialized) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.connect(g);
+                g.connect(this.masterGain);
+
+                if (type === 'near-miss') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(1760, now + 0.1);
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'crash') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(100, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                    g.gain.setValueAtTime(0.3, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'purchase') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(880, now + 0.05);
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                this.masterGain.gain.value = this.muted ? 0 : 1;
+                audioToggle.innerText = this.muted ? '🔇' : '🔊';
+            }
+
+            setVolume(val) {
+                if (!this.initialized) return;
+                this.masterGain.gain.value = this.muted ? 0 : parseFloat(val);
+            }
+
+            panic() {
+                if (this.ctx) {
+                    this.ctx.close().then(() => {
+                        this.initialized = false;
+                        this.init();
+                    });
+                } else {
+                    this.init();
+                }
+            }
+        }
+
+        const neonAudio = new NeonAudio();
+
+        let width, height;
+        let score = 0;
+        let totalPoints = parseInt(localStorage.getItem('neon_surge_total_points')) || 0;
+        let gameActive = false;
+        let speed = 4;
+        let shake = 0;
+
+        // Frenzy State
+        let frenzyProgress = 0;
+        let isFrenzy = false;
+        let frenzyTimer = 0;
+
+        const SKINS = {
+            'Neon Cyan': { color: '#00ffff', cost: 0, owned: true },
+            'Golden Pulse': { color: '#ffcc00', cost: 50, owned: false },
+            'Void Shadow': { color: '#bc13fe', cost: 150, owned: false },
+            'Rainbow Glitch': { color: 'rainbow', cost: 500, owned: false }
+        };
+        let currentSkin = 'Neon Cyan';
+
+        const COLORS = {
+            player: '#00ffff',
+            wall: '#ff00ff',
+            particle: '#00ffff',
+            bonus: '#00ff00',
+            bg: '#050505'
+        };
+
+        const player = {
+            x: 100,
+            y: 0,
+            radius: 12,
+            targetY: 0,
+            vy: 0,
+            trail: []
+        };
+
+        let walls = [];
+        let particles = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            player.y = height / 2;
+            player.targetY = height / 2;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function createWall() {
+            const gapSize = 160 - Math.min(score * 0.5, 60);
+            const gapPos = Math.random() * (height - gapSize) + gapSize/2;
+            walls.push({
+                x: width,
+                gapPos: gapPos,
+                gapSize: gapSize,
+                width: 40,
+                passed: false
+            });
+        }
+
+        function spawnParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function showNearMiss(x, y) {
+            const div = document.createElement('div');
+            div.className = 'near-miss';
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            div.innerText = 'NEAR MISS!';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 800);
+        }
+
+        function updateLeaderboard() {
+            let highScores = JSON.parse(localStorage.getItem('neon_surge_scores')) || [];
+            highScores.push(score);
+            highScores.sort((a, b) => b - a);
+            highScores = highScores.slice(0, 5);
+            localStorage.setItem('neon_surge_scores', JSON.stringify(highScores));
+            
+            scoresList.innerHTML = highScores.map((s, i) => `${i+1}. ${s}`).join('<br>');
+        }
+
+        function renderShop() {
+            shopItemsContainer.innerHTML = '';
+            for (const [name, data] of Object.entries(SKINS)) {
+                const item = document.createElement('div');
+                item.className = `shop-item ${data.owned ? 'owned' : ''}`;
+                item.innerHTML = `<span style="color: ${data.color === 'rainbow' ? '#fff' : data.color}">${name}</span> <span>${data.owned ? 'OWNED' : data.cost + ' PTS'}</span>`;
+                item.onclick = () => buySkin(name);
+                shopItemsContainer.appendChild(item);
+            }
+        }
+
+        function buySkin(name) {
+            const skin = SKINS[name];
+            if (skin.owned) {
+                currentSkin = name;
+            } else if (totalPoints >= skin.cost) {
+                totalPoints -= skin.cost;
+                skin.owned = true;
+                currentSkin = name;
+                localStorage.setItem('neon_surge_total_points', totalPoints);
+                neonAudio.playSFX('purchase');
+            }
+            renderShop();
+            updateUI();
+        }
+
+        function updateUI() {
+            scoreElement.innerText = `SCORE: ${score}`;
+            frenzyFill.style.width = `${frenzyProgress}%`;
+        }
+
+        async function resetGame() {
+            score = 0;
+            speed = 4;
+            walls = [];
+            particles = [];
+            player.y = height / 2;
+            player.targetY = height / 2;
+            player.vy = 0;
+            player.trail = [];
+            frenzyProgress = 0;
+            isFrenzy = false;
+            frenzyTimer = 0;
+            scoreElement.innerText = `SCORE: 0`;
+            messageElement.style.display = 'none';
+            shopElement.style.display = 'none';
+            document.body.classList.remove('frenzy-bg');
+            gameActive = true;
+            updateUI();
+
+            messageElement.style.display = 'block';
+            messageElement.innerHTML = 'CONNECTING TO SYNTH...';
+            await neonAudio.init();
+            messageElement.style.display = 'none';
+            neonAudio.setFrenzy(false);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            shake = 40; 
+            spawnParticles(player.x, player.y, getPlayerColor(), 50);
+            
+            totalPoints += score;
+            localStorage.setItem('neon_surge_total_points', totalPoints);
+            
+            const highScores = JSON.parse(localStorage.getItem('neon_surge_scores')) || [];
+            const isNewHigh = highScores.length === 0 || score > highScores[0];
+            
+            if (isNewHigh) {
+                // Trigger Victory Max Dopamine Response
+                shake = 80;
+                spawnParticles(width/2, height/2, '#fff', 100);
+                messageElement.innerHTML = `<div style="color:#fff; font-size: 40px; text-shadow: 0 0 20px #fff; margin-bottom: 10px;">NEW RECORD! 🚀</div>`;
+                setTimeout(() => {
+                    renderGameOver();
+                }, 1000);
+            } else {
+                renderGameOver();
+            }
+        }
+
+        function renderGameOver() {
+            updateLeaderboard();
+            messageElement.innerHTML = `
+                <div style="margin-bottom: 20px;">CRASHED!<br>FINAL SCORE: ${score}</div>
+                <div style="font-size: 14px; color: #aaa; margin-bottom: 20px;">TOTAL BANK: ${totalPoints}</div>
+                <a href="https://wa.me/27624027710" target="_blank" class="cta-button" style="text-decoration: none; text-align: center;">JOIN THE INNER CIRCLE 💎</a>
+                <button class="menu-button" id="btn-share" style="display: block; margin: 10px auto;">SHARE SCORE ⚡</button>
+                <button class="menu-button" id="btn-restart" style="display: block; margin: 10px auto;">PLAY AGAIN</button>
+                <button class="menu-button" id="btn-shop" style="display: block; margin: 10px auto;">NEON SHOP</button>
+                <button class="menu-button" id="btn-home" style="display: block; margin: 10px auto;">MAIN MENU</button>
+            `;
+            messageElement.style.display = 'block';
+            
+            document.getElementById('btn-restart').onclick = (e) => {
+                e.stopPropagation();
+                resetGame();
+            };
+            document.getElementById('btn-shop').onclick = (e) => {
+                e.stopPropagation();
+                if (totalPoints > 0 || score > 0) {
+                    renderShop();
+                    shopElement.style.display = 'block';
+                }
+            };
+            document.getElementById('btn-home').onclick = (e) => {
+                e.stopPropagation();
+                location.reload();
+            };
+            document.getElementById('btn-share').onclick = (e) => {
+                e.stopPropagation();
+                shareScore();
+            };
+        }
+
+        async function shareScore() {
+            const shareText = `⚡ I just surged ${score} points in NEON SURGE! Can you beat me? 🚀 ${window.location.href}`;
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'NEON SURGE',
+                        text: shareText,
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Share cancelled or failed', err);
+                }
+            } else {
+                // Fallback for desktop
+                const clipboardText = shareText;
+                navigator.clipboard.writeText(clipboardText).then(() => {
+                    alert('Score copied to clipboard! Share it with your friends 🚀');
+                });
+            }
+        }
+
+        function getPlayerColor() {
+            const skin = SKINS[currentSkin];
+            if (skin.color === 'rainbow') {
+                return `hsl(${Date.now() % 360}, 100%, 50%)`;
+            }
+            return skin.color;
+        }
+
+        function triggerFrenzy() {
+            isFrenzy = true;
+            frenzyTimer = 300; // 5 seconds at 60fps
+            frenzyProgress = 0;
+            document.body.classList.add('frenzy-bg');
+            shake = 10;
+            neonAudio.setFrenzy(true);
+        }
+
+        function update() {
+            if (shake > 0) shake *= 0.9;
+
+            if (gameActive) {
+                player.vy += (player.targetY - player.y) * 0.1;
+                player.vy *= 0.85;
+                player.y += player.vy;
+
+                player.trail.push({x: player.x, y: player.y});
+                if (player.trail.length > 20) player.trail.shift();
+
+                speed = isFrenzy ? 8 : (4 + Math.floor(score / 10) * 0.5);
+
+                if (walls.length === 0 || walls[walls.length - 1].x < width - 300) {
+                    createWall();
+                }
+
+                for (let i = walls.length - 1; i >= 0; i--) {
+                    const w = walls[i];
+                    w.x -= speed;
+
+                    if (w.x < player.x + player.radius && w.x + w.width > player.x - player.radius) {
+                        const topWallEnd = w.gapPos - w.gapSize / 2;
+                        const botWallStart = w.gapPos + w.gapSize / 2;
+
+                        if (player.y - player.radius < topWallEnd || player.y + player.radius > botWallStart) {
+                            if (isFrenzy) {
+                                spawnParticles(w.x + w.width/2, player.y, COLORS.wall, 20);
+                                walls.splice(i, 1);
+                                score += 1;
+                            } else {
+                                gameOver();
+                            }
+                        } else {
+                            const distToTop = Math.abs(player.y - player.radius - topWallEnd);
+                            const distToBot = Math.abs(player.y + player.radius - botWallStart);
+            if (distToTop < 15 || distToBot < 15) {
+                if (Math.random() < 0.05) {
+                    score += 2;
+                    frenzyProgress += 5;
+                    showNearMiss(player.x, player.y);
+                    neonAudio.playSFX('near-miss');
+                    if (frenzyProgress >= 100) triggerFrenzy();
+                }
+            }
+}
+                    }
+
+                    if (!w.passed && w.x + w.width < player.x) {
+                        w.passed = true;
+                        score++;
+                        frenzyProgress += 1;
+                        if (frenzyProgress >= 100) triggerFrenzy();
+                    }
+
+                    if (w.x + w.width < 0) walls.splice(i, 1);
+                }
+
+                if (isFrenzy) {
+                    frenzyTimer--;
+                    if (frenzyTimer <= 0) {
+                        isFrenzy = false;
+                        document.body.classList.remove('frenzy-bg');
+                        neonAudio.setFrenzy(false);
+                    }
+                }
+                updateUI();
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = COLORS.bg;
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.save();
+            if (shake > 0) {
+                ctx.translate(Math.random() * shake - shake/2, Math.random() * shake - shake/2);
+            }
+
+            const pColor = isFrenzy ? '#fff' : getPlayerColor();
+
+            if (player.trail.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = pColor;
+                ctx.lineWidth = player.radius * 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalAlpha = 0.3;
+                ctx.moveTo(player.trail[0].x, player.trail[0].y);
+                for (let i = 1; i < player.trail.length; i++) {
+                    ctx.lineTo(player.trail[i].x, player.trail[i].y);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = pColor;
+            ctx.shadowBlur = isFrenzy ? 30 : 15;
+            ctx.shadowColor = pColor;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = COLORS.wall;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = COLORS.wall;
+            walls.forEach(w => {
+                ctx.fillRect(w.x, 0, w.width, w.gapPos - w.gapSize / 2);
+                ctx.fillRect(w.x, w.gapPos + w.gapSize / 2, w.width, height - (w.gapPos + w.gapSize / 2));
+            });
+            ctx.shadowBlur = 0;
+
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 3, 3);
+            });
+            ctx.globalAlpha = 1.0;
+
+            ctx.restore();
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function handleInput(e) {
+            if (!gameActive) {
+                if (shopElement.style.display === 'block') return;
+                
+                // If the game over screen buttons are visible, let them handle the clicks.
+                // We check if the message element contains buttons.
+                if (messageElement.style.display === 'block' && messageElement.querySelector('.menu-button')) {
+                    return;
+                }
+                
+                resetGame();
+                return;
+            }
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            player.targetY = clientY;
+        }
+
+        document.getElementById('close-shop').onclick = (e) => {
+            e.stopPropagation();
+            shopElement.style.display = 'none';
+        }
+
+        audioToggle.onclick = (e) => {
+            e.stopPropagation();
+            neonAudio.toggleMute();
+        };
+        document.getElementById('volume-slider').oninput = (e) => {
+            e.stopPropagation();
+            neonAudio.setVolume(e.target.value);
+        };
+        document.getElementById('audio-panic').onclick = (e) => {
+            e.stopPropagation();
+            neonAudio.panic();
+        };
+
+        window.addEventListener('mousedown', handleInput);
+        window.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            handleInput(e);
+        }, {passive: false});
+
+        updateLeaderboard();
+        loop();
+    </script>
+</body>
+</html>
+<!-- trigger loop -->
