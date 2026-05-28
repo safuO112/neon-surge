@@ -233,7 +233,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 1000;
+            z-index: 9999;
             padding: 20px 40px;
             background: #00ff00;
             color: #000;
@@ -607,8 +607,8 @@
    587|            updateUI();
    588|
    589|            messageElement.style.display = 'block';
-   590|            messageElement.innerHTML = 'CONNECTING TO SYNTH...';
-   591|            await neonAudio.init();
+   590|            messageElement.innerHTML = 'READY!';
+   591|            neonAudio.init().catch(e => console.log("Audio skipped"));
    592|            messageElement.style.display = 'none';
    593|            neonAudio.setFrenzy(false);
    594|        }
@@ -894,6 +894,18 @@
             this.style.display = 'none';
             resetGame();
         };
+
+        
+        window.addEventListener('click', function(e) {
+            if (!gameActive && shopElement.style.display !== 'block') {
+                resetGame();
+            }
+        });
+        window.addEventListener('touchstart', function(e) {
+            if (!gameActive && shopElement.style.display !== 'block') {
+                resetGame();
+            }
+        }, {passive: true});
 
         loop();
    872|    </script>
